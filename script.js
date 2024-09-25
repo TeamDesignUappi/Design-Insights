@@ -110,30 +110,30 @@ function updateCommentsTable(comments, pages) {
         mentions.forEach(mention => {
             if (!mentionCounts[mention]) {
                 mentionCounts[mention] = {
-                    '#ajustes_auto_layout': 0,
-                    '#ajustes_estilos': 0,
-                    '#ajustes_variaveis': 0,
-                    '#ajustes_componentes': 0,
-                    '#ajustes_prototipo': 0
+                    auto_layout: 0,
+                    estilos: 0,
+                    variaveis: 0,
+                    componentes: 0,
+                    prototipo: 0
                 }
             }
 
             // Se a pessoa foi mencionada no comentário, conta as palavras-chave
             if (commentText.includes(mention)) {
-                if (commentText.includes('#ajustes_auto_layout')) {
-                    mentionCounts[mention]['#ajustes_auto_layout']++
+                if (commentText.includes('auto_layout')) {
+                    mentionCounts[mention]['auto_layout']++
                 }
-                if (commentText.includes('#ajustes_estilos')) {
-                    mentionCounts[mention]['#ajustes_estilos']++
+                if (commentText.includes('estilos')) {
+                    mentionCounts[mention]['estilos']++
                 }
-                if (commentText.includes('#ajustes_variaveis')) {
-                    mentionCounts[mention]['#ajustes_variaveis']++
+                if (commentText.includes('variaveis')) {
+                    mentionCounts[mention]['variaveis']++
                 }
-                if (commentText.includes('#ajustes_componentes')) {
-                    mentionCounts[mention]['#ajustes_componentes']++
+                if (commentText.includes('componentes')) {
+                    mentionCounts[mention]['componentes']++
                 }
-                if (commentText.includes('#ajustes_prototipo')) {
-                    mentionCounts[mention]['#ajustes_prototipo']++
+                if (commentText.includes('prototipo')) {
+                    mentionCounts[mention]['prototipo']++
                 }
             }
         })
@@ -261,31 +261,31 @@ function generateKeywordTables(mentionCounts, allComments) {
 
     // Nova tabela para contagem total de tags do projeto em todos os comentários
     const totalTagCounts = {
-        '#ajustes_auto_layout': 0,
-        '#ajustes_estilos': 0,
-        '#ajustes_variaveis': 0,
-        '#ajustes_componentes': 0,
-        '#ajustes_prototipo': 0
+        auto_layout: 0,
+        estilos: 0,
+        variaveis: 0,
+        componentes: 0,
+        prototipo: 0
     }
 
     // Conta as ocorrências de cada tag em todos os comentários
     allComments.forEach(comment => {
         const commentText = comment.message.toLowerCase()
 
-        if (commentText.includes('#ajustes_auto_layout')) {
-            totalTagCounts['#ajustes_auto_layout']++
+        if (commentText.includes('auto_layout')) {
+            totalTagCounts['auto_layout']++
         }
-        if (commentText.includes('#ajustes_estilos')) {
-            totalTagCounts['#ajustes_estilos']++
+        if (commentText.includes('estilos')) {
+            totalTagCounts['estilos']++
         }
-        if (commentText.includes('#ajustes_variaveis')) {
-            totalTagCounts['#ajustes_variaveis']++
+        if (commentText.includes('variaveis')) {
+            totalTagCounts['variaveis']++
         }
-        if (commentText.includes('#ajustes_componentes')) {
-            totalTagCounts['#ajustes_componentes']++
+        if (commentText.includes('componentes')) {
+            totalTagCounts['componentes']++
         }
-        if (commentText.includes('#ajustes_prototipo')) {
-            totalTagCounts['#ajustes_prototipo']++
+        if (commentText.includes('prototipo')) {
+            totalTagCounts['prototipo']++
         }
     })
 
