@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Design Insights</title>
+        <link rel="stylesheet" href="styles.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <h1 id="page-title">Design Insights</h1>
+        <div class="line-filters">
+            <!-- Inputs para inserir o Token e a File Key -->
+            <div class="filters">
+                <label for="figma-token-input">Figma Token:</label>
+                <input
+                    type="text"
+                    id="figma-token-input"
+                    placeholder="Insira seu Figma Token"
+                />
+            </div>
+
+            <div class="filters">
+                <label for="file-key-input">File Key:</label>
+                <input
+                    type="text"
+                    id="file-key-input"
+                    placeholder="Insira a File Key"
+                />
+            </div>
+
+            <!-- Botão para carregar os comentários -->
+            <button id="load-comments-button">Carregar Comentários</button>
+        </div>
+        <br />
+
+        <!-- Indicador de carregamento -->
+        <p id="loading-indicator">
+            Carregando comentários, por favor aguarde...
+        </p>
+
+        <div id="keyword-tables-container"></div>
+
+        <!-- Filtros de comentários -->
+        <h2>Filtrar comentários</h2>
+        <div class="line-filters">
+            <div class="filters">
+                <label for="page-filter">Por página</label>
+                <select id="page-filter">
+                    <option value="">Todas as Páginas</option>
+                </select>
+            </div>
+
+            <div class="filters">
+                <label for="text-filter">Por palavra-chave</label>
+                <select id="text-filter">
+                    <option value="">Todos os Comentários</option>
+                    <option value="#ajustes_auto_layout">
+                        #ajustes_auto_layout
+                    </option>
+                    <option value="#ajustes_estilos">#ajustes_estilos</option>
+                    <option value="#ajustes_variaveis">
+                        #ajustes_variaveis
+                    </option>
+                    <option value="#ajustes_prototipo">
+                        #ajustes_prototipo
+                    </option>
+                    <option value="#ajustes_componentes">
+                        #ajustes_componentes
+                    </option>
+                </select>
+            </div>
+
+            <div class="filters">
+                <label for="person-filter">Por designer mencionado</label>
+                <select id="person-filter">
+                    <option value="">Todos os Comentários</option>
+                    <option value="@Jheny Nunes">@Jheny Nunes</option>
+                    <option value="@Gutierres">@Gutierres</option>
+                    <option value="@Emily Salvador">@Emily Salvador</option>
+                    <option value="@Letícia Escobar">@Letícia Escobar</option>
+                </select>
+            </div>
+
+            <!-- Novo campo de busca por pessoa -->
+            <div class="filters">
+                <label for="person-search">Criado por</label>
+                <select id="person-search">
+                    <option value="">Todos os usuários</option>
+                    <!-- As opções serão preenchidas dinamicamente -->
+                </select>
+            </div>
+        </div>
+        <br />
+        <h2 id="comment-count">Total de comentários: 0</h2>
+
+        <table id="comments-table">
+            <thead>
+                <tr>
+                    <th>Comentário</th>
+                    <th>Página</th>
+                    <th>Criado por</th>
+                    <th>Criado em</th>
+                    <th>Status</th>
+                    <th>Resolvido em</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Comentários serão inseridos aqui -->
+            </tbody>
+        </table>
+
+        <script src="script.js"></script>
+    </body>
+</html>
