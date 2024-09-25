@@ -120,20 +120,20 @@ function updateCommentsTable(comments, pages) {
 
             // Se a pessoa foi mencionada no comentário, conta as palavras-chave
             if (commentText.includes(mention)) {
-                if (commentText.includes('auto_layout')) {
-                    mentionCounts[mention]['auto_layout']++
+                if (commentText.includes('#auto_layout')) {
+                    mentionCounts[mention]['#auto_layout']++
                 }
-                if (commentText.includes('estilos')) {
-                    mentionCounts[mention]['estilos']++
+                if (commentText.includes('#estilos')) {
+                    mentionCounts[mention]['#estilos']++
                 }
-                if (commentText.includes('variaveis')) {
-                    mentionCounts[mention]['variaveis']++
+                if (commentText.includes('#variaveis')) {
+                    mentionCounts[mention]['#variaveis']++
                 }
-                if (commentText.includes('componentes')) {
-                    mentionCounts[mention]['componentes']++
+                if (commentText.includes('#componentes')) {
+                    mentionCounts[mention]['#componentes']++
                 }
-                if (commentText.includes('prototipo')) {
-                    mentionCounts[mention]['prototipo']++
+                if (commentText.includes('#prototipo')) {
+                    mentionCounts[mention]['#prototipo']++
                 }
             }
         })
@@ -272,20 +272,20 @@ function generateKeywordTables(mentionCounts, allComments) {
     allComments.forEach(comment => {
         const commentText = comment.message.toLowerCase()
 
-        if (commentText.includes('auto_layout')) {
-            totalTagCounts['auto_layout']++
+        if (commentText.includes('#auto_layout')) {
+            totalTagCounts['#auto_layout']++
         }
-        if (commentText.includes('estilos')) {
-            totalTagCounts['estilos']++
+        if (commentText.includes('#estilos')) {
+            totalTagCounts['#estilos']++
         }
-        if (commentText.includes('variaveis')) {
-            totalTagCounts['variaveis']++
+        if (commentText.includes('#variaveis')) {
+            totalTagCounts['#variaveis']++
         }
-        if (commentText.includes('componentes')) {
-            totalTagCounts['componentes']++
+        if (commentText.includes('#componentes')) {
+            totalTagCounts['#componentes']++
         }
-        if (commentText.includes('prototipo')) {
-            totalTagCounts['prototipo']++
+        if (commentText.includes('#prototipo')) {
+            totalTagCounts['#prototipo']++
         }
     })
 
