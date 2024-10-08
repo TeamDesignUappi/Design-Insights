@@ -1,234 +1,360 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const loadCommentsButton = document.getElementById('load-comments-button');
-    loadCommentsButton.addEventListener('click', handleLoadComments);
-});
+    document
+        .getElementById('load-comments-button')
+        .addEventListener('click', () => {
+            const figmaToken =
+                document.getElementById('figma-token-input').value
+            const fileKey = document.getElementById('file-key-input').value
 
-function handleLoadComments() {
-    const figmaToken = document.getElementById('figma-token-input').value;
-    const fileKey = document.getElementById('file-key-input').value;
+            if (!figmaToken || !fileKey) {
+                alert('Por favor, insira o Figma Token e a File Key.')
+                return
+            }
 
-    if (!figmaToken || !fileKey) {
-        alert('Por favor, insira o Figma Token e a File Key.');
-        return;
-    }
-
-    fetchCommentsAndPages(figmaToken, fileKey);
-}
+            fetchCommentsAndPages(figmaToken, fileKey).then(
+                () => activateFilters() // Chamar aqui para ativar os filtros após o carregamento
+            )
+        })
+})
 
 async function fetchFigmaData(endpoint, figmaToken) {
     try {
         const response = await fetch(`https://api.figma.com/v1/${endpoint}`, {
-            headers: { 'X-FIGMA-TOKEN': figmaToken }
-        });
+            headers: {
+                'X-FIGMA-TOKEN': figmaToken
+            }
+        })
 
-        if (!response.ok) throw new Error('Erro na rede.');
-        return response.json();
+        if (!response.ok) {
+            throw new Error('Erro na rede.')
+        }
+
+        return response.json()
     } catch (error) {
-        console.error('Erro ao buscar os dados:', error);
+        console.error('Erro ao buscar os dados:', error)
     }
+}
+
+// Função para gerar as tabelas automáticas de palavras-chave por pessoa mencionada
+function generateKeywordTables(mentionCounts, allComments) {
+    const keywordTablesContainer = document.getElementById(
+        'keyword-tables-container'
+    )
+    keywordTablesContainer.innerHTML = '' // Limpa as tabelas anteriores
+
+    // Gera a tabela para cada pessoa mencionada
+    Object.keys(mentionCounts).forEach(user => {
+        const container = document.createElement('div')
+        container.classList.add('table-container') // Contêiner para customização de estilo, se necessário
+
+        // Cria a tabela
+        const table = document.createElement('table')
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th colspan="2">Responsável - ${user}</th>
+                </tr>
+                <tr>
+                    <th>Palavra-chave</th>
+                    <th>Ocorrências</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${Object.keys(mentionCounts[user])
+                    .map(
+                        keyword => `
+                        <tr>
+                            <td>${keyword}</td>
+                            <td>${mentionCounts[user][keyword]}</td>
+                        </tr>
+                    `
+                    )
+                    .join('')}
+            </tbody>
+        `
+
+        // Adiciona a tabela ao contêiner
+        container.appendChild(table)
+
+        // Cria e adiciona o botão de copiar
+        const copyButton = document.createElement('button')
+        copyButton.textContent = 'Copiar Dados'
+        copyButton.classList.add('copy-button') // Classe para customização de estilo
+        copyButton.addEventListener('click', () =>
+            copyTableData(table, copyButton)
+        )
+        container.appendChild(copyButton)
+
+        // Adiciona o contêiner com a tabela e o botão ao container principal
+        keywordTablesContainer.appendChild(container)
+    })
+
+    // Gera a tabela total de ocorrências por tags em todos os comentários
+    const totalTagCounts = {
+        auto_layout: 0,
+        estilos: 0,
+        variaveis: 0,
+        componentes: 0,
+        prototipo: 0
+    }
+    allComments.forEach(comment => {
+        const commentText = comment.message.toLowerCase()
+        if (commentText.includes('#auto_layout'))
+            totalTagCounts['auto_layout']++
+        if (commentText.includes('#estilos')) totalTagCounts['estilos']++
+        if (commentText.includes('#variaveis')) totalTagCounts['variaveis']++
+        if (commentText.includes('#componentes'))
+            totalTagCounts['componentes']++
+        if (commentText.includes('#prototipo')) totalTagCounts['prototipo']++
+    })
+
+    // Cria e adiciona a tabela total de tags
+    const totalTableContainer = document.createElement('div')
+    totalTableContainer.classList.add('table-container')
+
+    const totalTable = document.createElement('table')
+    totalTable.innerHTML = `
+        <thead>
+            <tr>
+                <th colspan="2">Total de Ocorrências por Tag</th>
+            </tr>
+            <tr>
+                <th>Palavra-chave</th>
+                <th>Ocorrências</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${Object.keys(totalTagCounts)
+                .map(
+                    tag => `
+                    <tr>
+                        <td>${tag}</td>
+                        <td>${totalTagCounts[tag]}</td>
+                    </tr>
+                `
+                )
+                .join('')}
+        </tbody>
+    `
+
+    // Adiciona a tabela e o botão de copiar ao contêiner
+    totalTableContainer.appendChild(totalTable)
+    const totalCopyButton = document.createElement('button')
+    totalCopyButton.textContent = 'Copiar Dados'
+    totalCopyButton.classList.add('copy-button')
+    totalCopyButton.addEventListener('click', () =>
+        copyTableData(totalTable, totalCopyButton)
+    )
+    totalTableContainer.appendChild(totalCopyButton)
+
+    // Adiciona o contêiner da tabela total ao container principal
+    keywordTablesContainer.appendChild(totalTableContainer)
 }
 
 async function fetchCommentsAndPages(figmaToken, fileKey) {
-    toggleLoadingIndicator(true);
+    const loadingIndicator = document.getElementById('loading-indicator')
+    loadingIndicator.style.display = 'block'
 
-    const [commentsData, fileData] = await Promise.all([
-        fetchFigmaData(`files/${fileKey}/comments`, figmaToken),
-        fetchFigmaData(`files/${fileKey}`, figmaToken)
-    ]);
+    const commentsData = await fetchFigmaData(
+        `files/${fileKey}/comments`,
+        figmaToken
+    )
+    const fileData = await fetchFigmaData(`files/${fileKey}`, figmaToken)
 
-    toggleLoadingIndicator(false);
+    loadingIndicator.style.display = 'none'
 
-    if (!commentsData || !fileData) return;
+    if (!commentsData || !fileData) return
 
-    const pages = fileData.document.children.filter(child => child.type === 'CANVAS');
-    updateProjectTitle(fileData.name);
-    populatePageFilter(pages);
-    populateUserSelect(commentsData.comments);
-    updateCommentsTable(commentsData.comments, pages);
-}
+    const pages = fileData.document.children.filter(
+        child => child.type === 'CANVAS'
+    )
+    const projectName = fileData.name
+    document.getElementById(
+        'page-title'
+    ).textContent = `Design Insights | ${projectName}`
 
-function toggleLoadingIndicator(show) {
-    const loadingIndicator = document.getElementById('loading-indicator');
-    loadingIndicator.style.display = show ? 'block' : 'none';
-}
-
-function updateProjectTitle(projectName) {
-    document.getElementById('page-title').textContent = `Design Insights | ${projectName}`;
-}
-
-function populatePageFilter(pages) {
-    const pageFilter = document.getElementById('page-filter');
-    pageFilter.innerHTML = '<option value="">Todas as Páginas</option>';
+    const pageFilter = document.getElementById('page-filter')
+    pageFilter.innerHTML = '<option value="">Todas as Páginas</option>'
     pages.forEach(page => {
-        pageFilter.innerHTML += `<option value="${page.id}">${page.name}</option>`;
-    });
-}
+        const option = document.createElement('option')
+        option.value = page.id
+        option.textContent = page.name
+        pageFilter.appendChild(option)
+    })
 
-function populateUserSelect(comments) {
-    const userSelect = document.getElementById('person-search');
-    userSelect.innerHTML = '<option value="">Todos os usuários</option>';
-    const userHandles = new Set(comments.map(comment => comment.user?.handle).filter(Boolean));
+    const userSelect = document.getElementById('person-search')
+    userSelect.innerHTML = '<option value="">Todos os usuários</option>'
+    const userHandles = new Set()
+
+    commentsData.comments.forEach(comment => {
+        if (comment.user && comment.user.handle) {
+            userHandles.add(comment.user.handle)
+        }
+    })
 
     userHandles.forEach(handle => {
-        userSelect.innerHTML += `<option value="${handle}">${handle}</option>`;
-    });
-}
+        const option = document.createElement('option')
+        option.value = handle
+        option.textContent = handle
+        userSelect.appendChild(option)
+    })
 
-function updateCommentsTable(comments, pages) {
-    const commentsTableBody = document.querySelector('#comments-table tbody');
-    commentsTableBody.innerHTML = '';
-
-    const mentionCounts = initializeMentionCounts(['jheny nunes', 'gutierres', 'emily salvador']);
-    comments.forEach(comment => {
-        updateMentionCounts(comment, mentionCounts);
-        commentsTableBody.appendChild(createCommentRow(comment, pages));
-    });
-
-    updateCommentCount(comments.length);
-    generateKeywordTables(mentionCounts, comments);
-    activateFilters();
-}
-
-function initializeMentionCounts(mentions) {
-    return mentions.reduce((acc, mention) => {
-        acc[mention] = { auto_layout: 0, estilos: 0, variaveis: 0, componentes: 0, prototipo: 0 };
-        return acc;
-    }, {});
-}
-
-function updateMentionCounts(comment, mentionCounts) {
-    const commentText = comment.message.toLowerCase();
-    for (const mention in mentionCounts) {
-        if (commentText.includes(mention)) {
-            updateKeywordCount(commentText, mentionCounts[mention]);
-        }
-    }
-}
-
-function updateKeywordCount(commentText, mentionCount) {
-    const keywords = ['#auto_layout', '#estilos', '#variaveis', '#componentes', '#prototipo'];
-    keywords.forEach(keyword => {
-        if (commentText.includes(keyword)) mentionCount[keyword]++;
-    });
-}
-
-function createCommentRow(comment, pages) {
-    const row = document.createElement('tr');
-    const page = pages.find(page => page.id === (comment.client_meta?.node_id || ''));
-    row.dataset.pageId = page ? page.id : '';
-    row.dataset.commentText = comment.message.toLowerCase();
-    row.dataset.userHandle = comment.user.handle.toLowerCase();
-
-    row.innerHTML = `
-        <td>${comment.message}</td>
-        <td>${page ? page.name : 'Página não encontrada'}</td>
-        <td>${comment.user.handle}</td>
-        <td>${new Date(comment.created_at).toLocaleString()}</td>
-        <td>${comment.resolved_at ? 'Resolvido' : 'Não Resolvido'}</td>
-        <td>${comment.resolved_at ? new Date(comment.resolved_at).toLocaleString() : 'Não Resolvido'}</td>
-    `;
-    return row;
-}
-
-function updateCommentCount(count) {
-    document.getElementById('comment-count').textContent = `Total de Comentários: ${count}`;
-}
-
-function generateKeywordTables(mentionCounts, allComments) {
-    const keywordTablesContainer = document.getElementById('keyword-tables-container');
-    keywordTablesContainer.innerHTML = '';
-
-    Object.entries(mentionCounts).forEach(([user, counts]) => {
-        keywordTablesContainer.appendChild(createKeywordTable(user, counts));
-    });
-
-    keywordTablesContainer.appendChild(createTotalTagTable(allComments));
-}
-
-function createKeywordTable(user, counts) {
-    const container = document.createElement('div');
-    container.classList.add('table-container');
-    const table = createTable(`Responsável - ${user}`, counts);
-    container.append(table, createCopyButton(table));
-    return container;
-}
-
-function createTotalTagTable(allComments) {
-    const totalTagCounts = calculateTotalTagCounts(allComments);
-    const container = document.createElement('div');
-    container.classList.add('table-container');
-    const table = createTable('Total de Ocorrências por Tag', totalTagCounts);
-    container.append(table, createCopyButton(table));
-    return container;
-}
-
-function calculateTotalTagCounts(allComments) {
-    const counts = { auto_layout: 0, estilos: 0, variaveis: 0, componentes: 0, prototipo: 0 };
-    allComments.forEach(comment => {
-        updateKeywordCount(comment.message.toLowerCase(), counts);
-    });
-    return counts;
-}
-
-function createTable(title, data) {
-    const table = document.createElement('table');
-    table.innerHTML = `
-        <thead>
-            <tr><th colspan="2">${title}</th></tr>
-            <tr><th>Palavra-chave</th><th>Ocorrências</th></tr>
-        </thead>
-        <tbody>
-            ${Object.entries(data).map(([keyword, count]) => `<tr><td>${keyword}</td><td>${count}</td></tr>`).join('')}
-        </tbody>
-    `;
-    return table;
-}
-
-function createCopyButton(table) {
-    const button = document.createElement('button');
-    button.textContent = 'Copiar dados';
-    button.classList.add('copy-button');
-    button.addEventListener('click', () => copyTableData(table, button));
-    return button;
-}
-
-function copyTableData(table, button) {
-    const tableText = Array.from(table.querySelectorAll('tr'))
-        .map(row => Array.from(row.querySelectorAll('th, td')).map(cell => cell.textContent.trim()).join('\t'))
-        .join('\n');
-
-    navigator.clipboard.writeText(tableText).then(() => {
-        const originalText = button.textContent;
-        button.textContent = 'Copiado!';
-        setTimeout(() => { button.textContent = originalText; }, 2000);
-    });
+    updateCommentsTable(commentsData.comments, pages)
 }
 
 function activateFilters() {
-    ['page-filter', 'text-filter', 'person-filter', 'person-search'].forEach(id => {
-        document.getElementById(id).addEventListener('input', filterComments);
-    });
+    const pageFilter = document.getElementById('page-filter')
+    const keywordFilter = document.getElementById('keyword-filter')
+    const userFilter = document.getElementById('person-search')
+    const textFilter = document.getElementById('text-search')
+
+    // Adicionar evento de filtro a cada elemento
+    pageFilter.addEventListener('change', filterCommentsTable)
+    keywordFilter.addEventListener('input', filterCommentsTable)
+    userFilter.addEventListener('change', filterCommentsTable)
+    textFilter.addEventListener('input', filterCommentsTable)
 }
 
-function filterComments() {
-    const filters = {
-        page: document.getElementById('page-filter').value,
-        text: document.getElementById('text-filter').value.toLowerCase(),
-        user: document.getElementById('person-search').value.toLowerCase(),
-        mention: document.getElementById('person-filter').value.toLowerCase()
-    };
+// Chamar activateFilters() após carregar os dados
+document.addEventListener('DOMContentLoaded', () => {
+    document
+        .getElementById('load-comments-button')
+        .addEventListener('click', () => {
+            const figmaToken =
+                document.getElementById('figma-token-input').value
+            const fileKey = document.getElementById('file-key-input').value
 
-    const rows = document.querySelectorAll('#comments-table tbody tr');
-    let visibleCount = 0;
+            if (!figmaToken || !fileKey) {
+                alert('Por favor, insira o Figma Token e a File Key.')
+                return
+            }
 
-    rows.forEach(row => {
-        const isVisible = Object.entries(filters).every(([key, value]) => 
-            !value || row.dataset[`${key === 'page' ? 'pageId' : key}Text`].includes(value)
-        );
+            fetchCommentsAndPages(figmaToken, fileKey).then(() =>
+                activateFilters()
+            )
+        })
+})
 
-        row.style.display = isVisible ? '' : 'none';
-        if (isVisible) visibleCount++;
-    });
+function filterCommentsTable() {
+    const pageValue = document.getElementById('page-filter').value.toLowerCase()
+    const keywordValue = document
+        .getElementById('keyword-filter')
+        .value.toLowerCase()
+    const userValue = document
+        .getElementById('person-search')
+        .value.toLowerCase()
+    const textValue = document.getElementById('text-search').value.toLowerCase()
 
-    updateCommentCount(visibleCount);
+    const commentsRows = document.querySelectorAll('#comments-table tbody tr')
+    commentsRows.forEach(row => {
+        const rowPage = row.dataset.pageId.toLowerCase()
+        const rowText = row.dataset.commentText.toLowerCase()
+        const rowUser = row.dataset.userHandle.toLowerCase()
+
+        // Verifica as condições dos filtros
+        const matchesPage = !pageValue || rowPage.includes(pageValue)
+        const matchesKeyword = !keywordValue || rowText.includes(keywordValue)
+        const matchesUser = !userValue || rowUser.includes(userValue)
+        const matchesText = !textValue || rowText.includes(textValue)
+
+        // Mostra ou oculta a linha dependendo dos filtros
+        if (matchesPage && matchesKeyword && matchesUser && matchesText) {
+            row.style.display = ''
+        } else {
+            row.style.display = 'none'
+        }
+    })
 }
+
+// Chamar activateFilters() após carregar os dados
+document.addEventListener('DOMContentLoaded', () => {
+    document
+        .getElementById('load-comments-button')
+        .addEventListener('click', () => {
+            const figmaToken =
+                document.getElementById('figma-token-input').value
+            const fileKey = document.getElementById('file-key-input').value
+
+            if (!figmaToken || !fileKey) {
+                alert('Por favor, insira o Figma Token e a File Key.')
+                return
+            }
+
+            fetchCommentsAndPages(figmaToken, fileKey).then(() =>
+                activateFilters()
+            )
+        })
+})
+
+function updateCommentsTable(comments, pages) {
+    const commentsTableBody = document.querySelector('#comments-table tbody')
+    commentsTableBody.innerHTML = ''
+
+    const mentionCounts = {}
+
+    comments.forEach(comment => {
+        const commentNodeId =
+            comment.client_meta && comment.client_meta.node_id
+                ? comment.client_meta.node_id
+                : null
+        const page = pages.find(page => page.id === commentNodeId)
+        const commentText = comment.message.toLowerCase()
+
+        const mentions = ['jheny nunes', 'gutierres', 'emily salvador']
+        mentions.forEach(mention => {
+            if (!mentionCounts[mention]) {
+                mentionCounts[mention] = {
+                    auto_layout: 0,
+                    estilos: 0,
+                    variaveis: 0,
+                    componentes: 0,
+                    prototipo: 0
+                }
+            }
+
+            if (commentText.includes(mention)) {
+                if (commentText.includes('#auto_layout'))
+                    mentionCounts[mention].auto_layout++
+                if (commentText.includes('#estilos'))
+                    mentionCounts[mention].estilos++
+                if (commentText.includes('#variaveis'))
+                    mentionCounts[mention].variaveis++
+                if (commentText.includes('#componentes'))
+                    mentionCounts[mention].componentes++
+                if (commentText.includes('#prototipo'))
+                    mentionCounts[mention].prototipo++
+            }
+        })
+
+        const row = document.createElement('tr')
+        row.dataset.pageId = page ? page.id : ''
+        row.dataset.commentText = comment.message.toLowerCase()
+        row.dataset.userHandle = comment.user.handle.toLowerCase()
+        row.innerHTML = `
+            <td>${comment.message}</td>
+            <td>${page ? page.name : 'Página não encontrada'}</td>
+            <td>${comment.user.handle}</td>
+            <td>${new Date(comment.created_at).toLocaleString()}</td>
+            <td>${comment.resolved_at ? 'Resolvido' : 'Não Resolvido'}</td>
+            <td>${
+                comment.resolved_at
+                    ? new Date(comment.resolved_at).toLocaleString()
+                    : 'Não Resolvido'
+            }</td>
+        `
+
+        commentsTableBody.appendChild(row)
+    })
+
+    updateCommentCount(comments.length)
+    generateKeywordTables(mentionCounts, comments)
+    activateFilters() // Remover esta chamada, pois já está sendo chamada em outro lugar
+}
+
+function updateCommentCount(count) {
+    document.getElementById(
+        'comment-count'
+    ).textContent = `Total de Comentários: ${count}`
+}
+
+// Adapte as outras funções de acordo, caso necessário.
