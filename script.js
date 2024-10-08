@@ -110,11 +110,11 @@ function updateCommentsTable(comments, pages) {
         mentions.forEach(mention => {
             if (!mentionCounts[mention]) {
                 mentionCounts[mention] = {
-                    auto_layout: 0,
-                    estilos: 0,
-                    variaveis: 0,
-                    componentes: 0,
-                    prototipo: 0
+                    #auto_layout: 0,
+                    #estilos: 0,
+                    #variaveis: 0,
+                    #componentes: 0,
+                    #prototipo: 0
                 }
             }
 
@@ -261,11 +261,11 @@ function generateKeywordTables(mentionCounts, allComments) {
 
     // Nova tabela para contagem total de tags do projeto em todos os comentários
     const totalTagCounts = {
-        auto_layout: 0,
-        estilos: 0,
-        variaveis: 0,
-        componentes: 0,
-        prototipo: 0
+        #auto_layout: 0,
+        #estilos: 0,
+        #variaveis: 0,
+        #componentes: 0,
+        #prototipo: 0
     }
 
     // Conta as ocorrências de cada tag em todos os comentários
