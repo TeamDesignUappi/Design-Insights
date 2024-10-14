@@ -250,6 +250,8 @@ function filterCommentsTable() {
         .value.toLowerCase()
 
     const commentsRows = document.querySelectorAll('#comments-table tbody tr')
+    let visibleCount = 0
+
     commentsRows.forEach(row => {
         const rowPage = row.dataset.pageId.toLowerCase()
         const rowText = row.dataset.commentText.toLowerCase()
@@ -267,10 +269,16 @@ function filterCommentsTable() {
             matchesCreatedBy
         ) {
             row.style.display = ''
+            visibleCount++
         } else {
             row.style.display = 'none'
         }
     })
+
+    // Atualiza o contador de comentários visíveis
+    document.getElementById(
+        'comment-count'
+    ).textContent = `Total de comentários: ${visibleCount}`
 }
 
 // Chamar activateFilters() após carregar os dados
