@@ -203,16 +203,18 @@ async function fetchCommentsAndPages(figmaToken, fileKey) {
 }
 
 function activateFilters() {
-    const pageFilter = document.getElementById('page-filter')
-    const keywordFilter = document.getElementById('keyword-filter')
-    const userFilter = document.getElementById('person-search')
-    const textFilter = document.getElementById('text-search')
-
-    // Adicionar evento de filtro a cada elemento
-    pageFilter.addEventListener('change', filterCommentsTable)
-    keywordFilter.addEventListener('input', filterCommentsTable)
-    userFilter.addEventListener('change', filterCommentsTable)
-    textFilter.addEventListener('input', filterCommentsTable)
+    document
+        .getElementById('page-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('text-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('person-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('person-search')
+        .addEventListener('change', filterCommentsTable)
 }
 
 // Chamar activateFilters() após carregar os dados
@@ -238,12 +240,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function filterCommentsTable() {
     const pageValue = document.getElementById('page-filter').value.toLowerCase()
     const keywordValue = document
-        .getElementById('keyword-filter')
+        .getElementById('text-filter')
         .value.toLowerCase()
-    const userValue = document
+    const personValue = document
+        .getElementById('person-filter')
+        .value.toLowerCase()
+    const createdByValue = document
         .getElementById('person-search')
         .value.toLowerCase()
-    const textValue = document.getElementById('text-search').value.toLowerCase()
 
     const commentsRows = document.querySelectorAll('#comments-table tbody tr')
     commentsRows.forEach(row => {
@@ -251,14 +255,17 @@ function filterCommentsTable() {
         const rowText = row.dataset.commentText.toLowerCase()
         const rowUser = row.dataset.userHandle.toLowerCase()
 
-        // Verifica as condições dos filtros
-        const matchesPage = !pageValue || rowPage.includes(pageValue)
+        const matchesPage = !pageValue || rowPage === pageValue
         const matchesKeyword = !keywordValue || rowText.includes(keywordValue)
-        const matchesUser = !userValue || rowUser.includes(userValue)
-        const matchesText = !textValue || rowText.includes(textValue)
+        const matchesPerson = !personValue || rowText.includes(personValue)
+        const matchesCreatedBy = !createdByValue || rowUser === createdByValue
 
-        // Mostra ou oculta a linha dependendo dos filtros
-        if (matchesPage && matchesKeyword && matchesUser && matchesText) {
+        if (
+            matchesPage &&
+            matchesKeyword &&
+            matchesPerson &&
+            matchesCreatedBy
+        ) {
             row.style.display = ''
         } else {
             row.style.display = 'none'
@@ -348,7 +355,6 @@ function updateCommentsTable(comments, pages) {
 
     updateCommentCount(comments.length)
     generateKeywordTables(mentionCounts, comments)
-    activateFilters() // Remover esta chamada, pois já está sendo chamada em outro lugar
 }
 
 function updateCommentCount(count) {
