@@ -151,6 +151,30 @@ function generateKeywordTables(mentionCounts, allComments) {
     keywordTablesContainer.appendChild(totalTableContainer)
 }
 
+function copyTableData(table, button) {
+    const rows = Array.from(table.querySelectorAll('tr'))
+    const textToCopy = rows
+        .map(row => {
+            const cells = Array.from(row.querySelectorAll('th, td'))
+            return cells.map(cell => cell.innerText).join('\t')
+        })
+        .join('\n')
+
+    navigator.clipboard.writeText(textToCopy).then(
+        () => {
+            // Adiciona uma breve confirmação visual ao botão
+            const originalText = button.textContent
+            button.textContent = 'Copiado!'
+            setTimeout(() => (button.textContent = originalText), 1500)
+        },
+        err => {
+            console.error('Erro ao copiar os dados: ', err)
+        }
+    )
+}
+
+document.getElementById('copy-button').addEventListener('click', copyTableData)
+
 async function fetchCommentsAndPages(figmaToken, fileKey) {
     const loadingIndicator = document.getElementById('loading-indicator')
     loadingIndicator.style.display = 'block'
