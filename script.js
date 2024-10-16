@@ -18,20 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 async function fetchFigmaData(endpoint, figmaToken) {
+    const url = `https://api.figma.com/v1/${endpoint}`
     try {
-        const response = await fetch(`https://api.figma.com/v1/${endpoint}`, {
+        const response = await fetch(url, {
             headers: {
-                'X-FIGMA-TOKEN': figmaToken
+                'X-Figma-Token': figmaToken
             }
         })
-
         if (!response.ok) {
-            throw new Error('Erro na rede.')
+            throw new Error(`Erro: ${response.statusText}`)
         }
-
-        return response.json()
+        return await response.json()
     } catch (error) {
         console.error('Erro ao buscar os dados:', error)
+    }
+}
+
+async function fetchFigmaDataWithDelay(endpoint, figmaToken, delay = 1000) {
+    try {
+        // Espera antes de fazer a requisição para respeitar o limite de requisições
+        await new Promise(resolve => setTimeout(resolve, delay))
+        return await fetchFigmaData(endpoint, figmaToken)
+    } catch (error) {
+        console.error('Erro ao buscar os dados com delay:', error)
     }
 }
 
@@ -179,16 +188,25 @@ async function fetchCommentsAndPages(figmaToken, fileKey) {
     const loadingIndicator = document.getElementById('loading-indicator')
     loadingIndicator.style.display = 'block'
 
-    const commentsData = await fetchFigmaData(
+    // Define um atraso de 1 segundo (1000 milissegundos) entre as requisições
+    const delay = 1000
+
+    const commentsData = await fetchFigmaDataWithDelay(
         `files/${fileKey}/comments`,
-        figmaToken
+        figmaToken,
+        delay
     )
-    const fileData = await fetchFigmaData(`files/${fileKey}`, figmaToken)
+    const fileData = await fetchFigmaDataWithDelay(
+        `files/${fileKey}`,
+        figmaToken,
+        delay
+    )
 
     loadingIndicator.style.display = 'none'
 
     if (!commentsData || !fileData) return
 
+    // Resto do código permanece igual
     const pages = fileData.document.children.filter(
         child => child.type === 'CANVAS'
     )
@@ -359,5 +377,3 @@ function updateCommentCount(count) {
         'comment-count'
     ).textContent = `Total de Comentários: ${count}`
 }
-
-// Adapte as outras funções de acordo, caso necessário.
