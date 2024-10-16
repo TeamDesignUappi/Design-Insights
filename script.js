@@ -241,26 +241,6 @@ function activateFilters() {
         .addEventListener('change', filterCommentsTable)
 }
 
-// Chamar activateFilters() após carregar os dados
-document.addEventListener('DOMContentLoaded', () => {
-    document
-        .getElementById('load-comments-button')
-        .addEventListener('click', () => {
-            const figmaToken =
-                document.getElementById('figma-token-input').value
-            const fileKey = document.getElementById('file-key-input').value
-
-            if (!figmaToken || !fileKey) {
-                alert('Por favor, insira o Figma Token e a File Key.')
-                return
-            }
-
-            fetchCommentsAndPages(figmaToken, fileKey).then(() =>
-                activateFilters()
-            )
-        })
-})
-
 function filterCommentsTable() {
     const pageValue = document.getElementById('page-filter').value.toLowerCase()
     const keywordValue = document
@@ -305,26 +285,6 @@ function filterCommentsTable() {
     ).textContent = `Total de comentários: ${visibleCount}`
 }
 
-// Chamar activateFilters() após carregar os dados
-document.addEventListener('DOMContentLoaded', () => {
-    document
-        .getElementById('load-comments-button')
-        .addEventListener('click', () => {
-            const figmaToken =
-                document.getElementById('figma-token-input').value
-            const fileKey = document.getElementById('file-key-input').value
-
-            if (!figmaToken || !fileKey) {
-                alert('Por favor, insira o Figma Token e a File Key.')
-                return
-            }
-
-            fetchCommentsAndPages(figmaToken, fileKey).then(() =>
-                activateFilters()
-            )
-        })
-})
-
 function updateCommentsTable(comments, pages) {
     const commentsTableBody = document.querySelector('#comments-table tbody')
     commentsTableBody.innerHTML = ''
@@ -339,7 +299,12 @@ function updateCommentsTable(comments, pages) {
         const page = pages.find(page => page.id === commentNodeId)
         const commentText = comment.message.toLowerCase()
 
-        const mentions = ['jheny nunes', 'gutierres', 'emily salvador','Gabriella varlez']
+        const mentions = [
+            'jheny nunes',
+            'gutierres',
+            'emily salvador',
+            'Gabriella varlez'
+        ]
         mentions.forEach(mention => {
             if (!mentionCounts[mention]) {
                 mentionCounts[mention] = {

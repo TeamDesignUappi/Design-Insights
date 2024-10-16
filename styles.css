@@ -136,7 +136,7 @@ button {
 #automatic-tables-container {
     display: grid;
     grid-template-columns: repeat(
-        4,
+        5,
         1fr
     ); /* Define 3 colunas de igual largura */
     gap: 20px; /* Espaço entre as tabelas */
@@ -146,7 +146,7 @@ button {
 /* Estilizando as tabelas automáticas para aparecerem lado a lado */
 #keyword-tables-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 3 colunas de tamanhos iguais */
+    grid-template-columns: repeat(5, 1fr); /* 3 colunas de tamanhos iguais */
     gap: 20px; /* Espaçamento entre as tabelas */
 }
 
