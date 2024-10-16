@@ -339,7 +339,7 @@ function updateCommentsTable(comments, pages) {
         const page = pages.find(page => page.id === commentNodeId)
         const commentText = comment.message.toLowerCase()
 
-        const mentions = ['jheny nunes', 'gutierres', 'emily salvador']
+        const mentions = ['jheny nunes', 'gutierres', 'emily salvador','Gabriella varlez']
         mentions.forEach(mention => {
             if (!mentionCounts[mention]) {
                 mentionCounts[mention] = {
