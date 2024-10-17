@@ -56,7 +56,6 @@ async function fetchCommentsAndPages(figmaToken, fileKey) {
 
     if (!commentsData || !fileData) return
 
-    // Resto do código permanece igual
     const pages = fileData.document.children.filter(
         child => child.type === 'CANVAS'
     )
