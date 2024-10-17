@@ -34,6 +34,222 @@ async function fetchFigmaData(endpoint, figmaToken) {
     }
 }
 
+async function fetchCommentsAndPages(figmaToken, fileKey) {
+    const loadingIndicator = document.getElementById('loading-indicator')
+    loadingIndicator.style.display = 'block'
+
+    // Define um atraso de 1 segundo (1000 milissegundos) entre as requisições
+    const delay = 1000
+
+    const commentsData = await fetchFigmaDataWithDelay(
+        `files/${fileKey}/comments`,
+        figmaToken,
+        delay
+    )
+    const fileData = await fetchFigmaDataWithDelay(
+        `files/${fileKey}`,
+        figmaToken,
+        delay
+    )
+
+    loadingIndicator.style.display = 'none'
+
+    if (!commentsData || !fileData) return
+
+    // Resto do código permanece igual
+    const pages = fileData.document.children.filter(
+        child => child.type === 'CANVAS'
+    )
+    const projectName = fileData.name
+    document.getElementById(
+        'page-title'
+    ).textContent = `Design Insights | ${projectName}`
+
+    const pageFilter = document.getElementById('page-filter')
+    pageFilter.innerHTML = '<option value="">Todas as Páginas</option>'
+    pages.forEach(page => {
+        const option = document.createElement('option')
+        option.value = page.id
+        option.textContent = page.name
+        pageFilter.appendChild(option)
+    })
+
+    const userSelect = document.getElementById('person-search')
+    userSelect.innerHTML = '<option value="">Todos os usuários</option>'
+    const userHandles = new Set()
+
+    commentsData.comments.forEach(comment => {
+        if (comment.user && comment.user.handle) {
+            userHandles.add(comment.user.handle)
+        }
+    })
+
+    userHandles.forEach(handle => {
+        const option = document.createElement('option')
+        option.value = handle
+        option.textContent = handle
+        userSelect.appendChild(option)
+    })
+
+    updateCommentsTable(commentsData.comments, pages)
+}
+
+// Função para atualizar as páginas e a tabela de comentários
+function updatePagesAndComments(fileData, comments) {
+    const pages = fileData.document.children.filter(child => child.type === 'CANVAS');
+    const projectName = fileData.name;
+    document.getElementById('page-title').textContent = `Design Insights | ${projectName}`;
+
+    // Preenche o filtro de páginas
+    const pageFilter = document.getElementById('page-filter');
+    pageFilter.innerHTML = '<option value="">Todas as Páginas</option>';
+    pages.forEach(page => {
+        const option = document.createElement('option');
+        option.value = page.id;
+        option.textContent = page.name;
+        pageFilter.appendChild(option);
+    });
+
+    // Preenche o filtro de usuários
+    const userSelect = document.getElementById('person-search');
+    userSelect.innerHTML = '<option value="">Todos os usuários</option>';
+    const userHandles = new Set();
+    comments.forEach(comment => {
+        if (comment.user && comment.user.handle) userHandles.add(comment.user.handle);
+    });
+    userHandles.forEach(handle => {
+        const option = document.createElement('option');
+        option.value = handle;
+        option.textContent = handle;
+        userSelect.appendChild(option);
+    });
+
+    // Atualiza a tabela de comentários e gera tabelas de palavras-chave
+    updateCommentsTable(comments, pages);
+}
+
+function updateCommentsTable(comments, pages) {
+    const commentsTableBody = document.querySelector('#comments-table tbody')
+    commentsTableBody.innerHTML = ''
+
+    const mentionCounts = {}
+
+    comments.forEach(comment => {
+        const commentNodeId =
+            comment.client_meta && comment.client_meta.node_id
+                ? comment.client_meta.node_id
+                : null
+        const page = pages.find(page => page.id === commentNodeId)
+        const commentText = comment.message.toLowerCase()
+
+        const mentions = [
+            'jheny nunes',
+            'gutierres',
+            'emily salvador',
+            'Gabriella varlez'
+        ]
+        mentions.forEach(mention => {
+            if (!mentionCounts[mention]) {
+                mentionCounts[mention] = {
+                    auto_layout: 0,
+                    estilos: 0,
+                    variaveis: 0,
+                    componentes: 0,
+                    prototipo: 0
+                }
+            }
+
+            if (commentText.includes(mention)) {
+                if (commentText.includes('#auto_layout'))
+                    mentionCounts[mention].auto_layout++
+                if (commentText.includes('#estilos'))
+                    mentionCounts[mention].estilos++
+                if (commentText.includes('#variaveis'))
+                    mentionCounts[mention].variaveis++
+                if (commentText.includes('#componentes'))
+                    mentionCounts[mention].componentes++
+                if (commentText.includes('#prototipo'))
+                    mentionCounts[mention].prototipo++
+            }
+        })
+
+        const row = document.createElement('tr')
+        row.dataset.pageId = page ? page.id : ''
+        row.dataset.commentText = comment.message.toLowerCase()
+        row.dataset.userHandle = comment.user.handle.toLowerCase()
+        row.innerHTML = `
+            <td>${comment.message}</td>
+            <td>${page ? page.name : 'Página não encontrada'}</td>
+            <td>${comment.user.handle}</td>
+            <td>${new Date(comment.created_at).toLocaleString()}</td>
+            <td>${comment.resolved_at ? 'Resolvido' : 'Não Resolvido'}</td>
+            <td>${
+                comment.resolved_at
+                    ? new Date(comment.resolved_at).toLocaleString()
+                    : 'Não Resolvido'
+            }</td>
+        `
+
+        commentsTableBody.appendChild(row)
+    })
+
+    updateCommentCount(comments.length)
+    generateKeywordTables(mentionCounts, comments)
+}
+
+// Função para processar cada comentário
+function processComment(comment, pages, mentionCounts) {
+    const commentNodeId = comment.client_meta?.node_id || null;
+    const page = pages.find(page => page.id === commentNodeId);
+    const commentText = comment.message.toLowerCase();
+    const mentions = ['jheny nunes', 'gutierres', 'emily salvador', 'Gabriella varlez'];
+
+    mentions.forEach(mention => {
+        if (!mentionCounts[mention]) {
+            mentionCounts[mention] = { auto_layout: 0, estilos: 0, variaveis: 0, componentes: 0, prototipo: 0 };
+        }
+        if (commentText.includes(mention)) {
+            if (commentText.includes('#auto_layout')) mentionCounts[mention].auto_layout++;
+            if (commentText.includes('#estilos')) mentionCounts[mention].estilos++;
+            if (commentText.includes('#variaveis')) mentionCounts[mention].variaveis++;
+            if (commentText.includes('#componentes')) mentionCounts[mention].componentes++;
+            if (commentText.includes('#prototipo')) mentionCounts[mention].prototipo++;
+        }
+    });
+
+    // Cria a linha da tabela de comentários
+    const row = document.createElement('tr');
+    row.dataset.pageId = page ? page.id : '';
+    row.dataset.commentText = comment.message.toLowerCase();
+    row.dataset.userHandle = comment.user.handle.toLowerCase();
+    row.innerHTML = `
+        <td>${comment.message}</td>
+        <td>${page ? page.name : 'Página não encontrada'}</td>
+        <td>${comment.user.handle}</td>
+        <td>${new Date(comment.created_at).toLocaleString()}</td>
+        <td>${comment.resolved_at ? 'Resolvido' : 'Não Resolvido'}</td>
+        <td>${comment.resolved_at ? new Date(comment.resolved_at).toLocaleString() : 'Não Resolvido'}</td>
+    `;
+
+    // Adiciona a linha à tabela de comentários
+    commentsTableBody.appendChild(row);
+}
+
+function activateFilters() {
+    document
+        .getElementById('page-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('text-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('person-filter')
+        .addEventListener('change', filterCommentsTable)
+    document
+        .getElementById('person-search')
+        .addEventListener('change', filterCommentsTable)
+}
+
 async function fetchFigmaDataWithDelay(endpoint, figmaToken, delay = 1000) {
     try {
         // Espera antes de fazer a requisição para respeitar o limite de requisições
@@ -184,81 +400,6 @@ function copyTableData(table, button) {
 
 document.getElementById('copy-button').addEventListener('click', copyTableData)
 
-async function fetchCommentsAndPages(figmaToken, fileKey) {
-    const loadingIndicator = document.getElementById('loading-indicator')
-    loadingIndicator.style.display = 'block'
-
-    // Define um atraso de 1 segundo (1000 milissegundos) entre as requisições
-    const delay = 1000
-
-    const commentsData = await fetchFigmaDataWithDelay(
-        `files/${fileKey}/comments`,
-        figmaToken,
-        delay
-    )
-    const fileData = await fetchFigmaDataWithDelay(
-        `files/${fileKey}`,
-        figmaToken,
-        delay
-    )
-
-    loadingIndicator.style.display = 'none'
-
-    if (!commentsData || !fileData) return
-
-    // Resto do código permanece igual
-    const pages = fileData.document.children.filter(
-        child => child.type === 'CANVAS'
-    )
-    const projectName = fileData.name
-    document.getElementById(
-        'page-title'
-    ).textContent = `Design Insights | ${projectName}`
-
-    const pageFilter = document.getElementById('page-filter')
-    pageFilter.innerHTML = '<option value="">Todas as Páginas</option>'
-    pages.forEach(page => {
-        const option = document.createElement('option')
-        option.value = page.id
-        option.textContent = page.name
-        pageFilter.appendChild(option)
-    })
-
-    const userSelect = document.getElementById('person-search')
-    userSelect.innerHTML = '<option value="">Todos os usuários</option>'
-    const userHandles = new Set()
-
-    commentsData.comments.forEach(comment => {
-        if (comment.user && comment.user.handle) {
-            userHandles.add(comment.user.handle)
-        }
-    })
-
-    userHandles.forEach(handle => {
-        const option = document.createElement('option')
-        option.value = handle
-        option.textContent = handle
-        userSelect.appendChild(option)
-    })
-
-    updateCommentsTable(commentsData.comments, pages)
-}
-
-function activateFilters() {
-    document
-        .getElementById('page-filter')
-        .addEventListener('change', filterCommentsTable)
-    document
-        .getElementById('text-filter')
-        .addEventListener('change', filterCommentsTable)
-    document
-        .getElementById('person-filter')
-        .addEventListener('change', filterCommentsTable)
-    document
-        .getElementById('person-search')
-        .addEventListener('change', filterCommentsTable)
-}
-
 function filterCommentsTable() {
     const pageValue = document.getElementById('page-filter').value.toLowerCase()
     const keywordValue = document
@@ -301,75 +442,6 @@ function filterCommentsTable() {
     document.getElementById(
         'comment-count'
     ).textContent = `Total de comentários: ${visibleCount}`
-}
-
-function updateCommentsTable(comments, pages) {
-    const commentsTableBody = document.querySelector('#comments-table tbody')
-    commentsTableBody.innerHTML = ''
-
-    const mentionCounts = {}
-
-    comments.forEach(comment => {
-        const commentNodeId =
-            comment.client_meta && comment.client_meta.node_id
-                ? comment.client_meta.node_id
-                : null
-        const page = pages.find(page => page.id === commentNodeId)
-        const commentText = comment.message.toLowerCase()
-
-        const mentions = [
-            'jheny nunes',
-            'gutierres',
-            'emily salvador',
-            'Gabriella varlez'
-        ]
-        mentions.forEach(mention => {
-            if (!mentionCounts[mention]) {
-                mentionCounts[mention] = {
-                    auto_layout: 0,
-                    estilos: 0,
-                    variaveis: 0,
-                    componentes: 0,
-                    prototipo: 0
-                }
-            }
-
-            if (commentText.includes(mention)) {
-                if (commentText.includes('#auto_layout'))
-                    mentionCounts[mention].auto_layout++
-                if (commentText.includes('#estilos'))
-                    mentionCounts[mention].estilos++
-                if (commentText.includes('#variaveis'))
-                    mentionCounts[mention].variaveis++
-                if (commentText.includes('#componentes'))
-                    mentionCounts[mention].componentes++
-                if (commentText.includes('#prototipo'))
-                    mentionCounts[mention].prototipo++
-            }
-        })
-
-        const row = document.createElement('tr')
-        row.dataset.pageId = page ? page.id : ''
-        row.dataset.commentText = comment.message.toLowerCase()
-        row.dataset.userHandle = comment.user.handle.toLowerCase()
-        row.innerHTML = `
-            <td>${comment.message}</td>
-            <td>${page ? page.name : 'Página não encontrada'}</td>
-            <td>${comment.user.handle}</td>
-            <td>${new Date(comment.created_at).toLocaleString()}</td>
-            <td>${comment.resolved_at ? 'Resolvido' : 'Não Resolvido'}</td>
-            <td>${
-                comment.resolved_at
-                    ? new Date(comment.resolved_at).toLocaleString()
-                    : 'Não Resolvido'
-            }</td>
-        `
-
-        commentsTableBody.appendChild(row)
-    })
-
-    updateCommentCount(comments.length)
-    generateKeywordTables(mentionCounts, comments)
 }
 
 function updateCommentCount(count) {
